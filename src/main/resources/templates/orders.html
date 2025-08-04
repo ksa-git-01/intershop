@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Заказы</title>
+</head>
+
+<body>
+<a href="/cart/items" style="float:right;">
+    <b>КОРЗИНА &cudarrr;</b>
+</a>
+<a href="/main/items" style="float:right;">
+    <b>ГЛАВНАЯ &cudarrr;</b>
+</a>
+<table style="width:70%;margin-left:auto;margin-right:auto;">
+    <tr th:each="order : ${orders}">
+        <td>
+            <h2>
+                <a th:text="${'Заказ №'+order.id()}" th:href="${'/orders/'+order.id()}"></a>
+            </h2>
+            <table>
+                <tr th:each="item : ${order.items()}">
+                    <td th:text="${item.getTitle()+' ('+item.getCount()+' шт.) '+(item.getPrice()*item.getCount())+' руб.'}"></td>
+                </tr>
+            </table>
+            <p>
+                <b th:text="${'Сумма: '+order.totalSum()}+' руб.'"></b>
+            </p>
+        </td>
+    </tr>
+</table>
+</body>
+
+</html>
