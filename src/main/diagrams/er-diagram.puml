@@ -1,0 +1,40 @@
+@startuml
+entity Item {
+  * id : BIGSERIAL <<PK>>
+  --
+  * title : VARCHAR(255)
+  * description : TEXT
+  filename : VARCHAR(500)
+  * count : INTEGER
+  * price : DOUBLE
+  * created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity Cart {
+  * id : BIGSERIAL <<PK>>
+  --
+  * item_id : BIGINT <<FK>>
+  * count : INTEGER
+  * created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity Order {
+  * id : BIGSERIAL <<PK>>
+  --
+  * item_id : BIGINT <<FK>>
+  * count : INTEGER
+  * price : DOUBLE
+  * created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+
+Item ||--o{ Cart : "has many"
+Item ||--o{ Order : "has many"
+
+@enduml
+
+
+
