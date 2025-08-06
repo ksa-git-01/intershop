@@ -22,12 +22,21 @@ CREATE TABLE IF NOT EXISTS cart (
 
 CREATE TABLE IF NOT EXISTS orders (
   id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id BIGSERIAL PRIMARY KEY,
   item_id BIGINT,
+  order_id BIGINT,
   count INTEGER NOT NULL,
   price NUMERIC(10,2) NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP,
-  CONSTRAINT fk_order_item
+  CONSTRAINT fk_order_items_item
         FOREIGN KEY (item_id)
-        REFERENCES item(id)
+        REFERENCES item(id),
+  CONSTRAINT fk_order_items_orders
+        FOREIGN KEY (order_id)
+        REFERENCES orders(id)
 );
