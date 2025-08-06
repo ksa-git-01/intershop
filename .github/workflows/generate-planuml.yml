@@ -1,0 +1,68 @@
+name: Generate PlantUML Diagrams
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/main/diagrams/**/*.puml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/main/diagrams/**/*.puml'
+
+jobs:
+  generate-diagrams:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+
+      - name: Download PlantUML
+        run: |
+          wget -O plantuml.jar https://github.com/plantuml/plantuml/releases/download/v1.2025.3/plantuml-1.2025.3.jar
+
+      - name: Generate diagrams
+        run: |
+          # Создаем папку для сгенерированных диаграмм если не существует
+          mkdir -p src/main/diagrams/generated
+          
+          # Устанавливаем переменную окружения для Graphviz
+          export GRAPHVIZ_DOT=/usr/bin/dot
+          
+          # Генерируем PNG для всех .puml файлов в src/main/diagrams/
+          find src/main/diagrams -name "*.puml" -exec java -DGRAPHVIZ_DOT=/usr/bin/dot -jar plantuml.jar -tpng -o "generated" {} \;
+
+      - name: Commit and push generated diagrams
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Добавляем только сгенерированные диаграммы
+          git add src/main/diagrams/generated/*.png || echo "No PNG files to add"
+          
+          # Коммитим только если есть изменения
+          if ! git diff --staged --quiet; then
+            git commit -m "Auto-generate PlantUML diagrams [skip ci]"
+          
+            # Пытаемся запушить, если не получается - делаем rebase
+            if ! git push origin main; then
+              git pull --rebase origin main
+              git push origin main
+            fi
+          else
+            echo "No changes to commit"
+          fi
