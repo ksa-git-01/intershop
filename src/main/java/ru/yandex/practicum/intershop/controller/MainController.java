@@ -6,7 +6,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import ru.yandex.practicum.intershop.dto.CartItemAction;
 import ru.yandex.practicum.intershop.dto.ItemMainDto;
 import ru.yandex.practicum.intershop.dto.Paging;
 import ru.yandex.practicum.intershop.mapper.ItemMapper;
@@ -48,7 +51,12 @@ public class MainController {
                 .build());
         return "main";
     }
-
+    @PostMapping("/main/items/{id}")
+    public String modifyCartItem (@PathVariable(name = "id") Long id,
+                                  @RequestParam(name = "action") CartItemAction action) {
+        itemService.modifyCartItem(id, action);
+        return "redirect:/main/items";
+    }
     private List<List<ItemMainDto>> getItemsForModel(List<Item> items) {
         return new ArrayList<>(IntStream.range(0, items.size())
                 .boxed()

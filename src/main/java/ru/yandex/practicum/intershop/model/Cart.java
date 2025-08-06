@@ -10,19 +10,18 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "item")
+@Table(name = "cart")
 @NoArgsConstructor
 @Getter
 @Setter
-public class Item {
+public class Cart {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String title;
-    private String description;
-    private String filename;
+    @ManyToOne
+    @JoinColumn(name = "item_id")
+    private Item item;
     private Integer count;
-    private Double price;
     @CreationTimestamp
     private LocalDateTime createdAt;
     @UpdateTimestamp
