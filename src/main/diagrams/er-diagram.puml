@@ -20,19 +20,27 @@ entity Cart {
   updated_at : TIMESTAMP
 }
 
-entity Order {
+entity Orders {
   * id : BIGSERIAL <<PK>>
   --
-  * item_id : BIGINT <<FK>>
-  * count : INTEGER
-  * price : DOUBLE
   * created_at : TIMESTAMP
   updated_at : TIMESTAMP
 }
 
+entity OrderItems {
+  * id : BIGSERIAL <<PK>>
+  --
+  * order_id : BIGINT <<FK>>
+  * item_id : BIGINT <<FK>>
+  * count : INTEGER
+  * price : DOUBLE
+  * created_at : TIMESTAMP
+}
+
 
 Item ||--o{ Cart : "has many"
-Item ||--o{ Order : "has many"
+Item ||--o{ OrderItems : "has many"
+Orders ||--o{ OrderItems : "has many"
 
 @enduml
 
