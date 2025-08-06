@@ -1,4 +1,4 @@
-package ru.yandex.practicum.intershop.model;
+package ru.yandex.practicum.intershop.dto;
 
 public enum ItemSort {
     NO,

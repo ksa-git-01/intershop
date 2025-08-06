@@ -1,5 +1,10 @@
-package ru.yandex.practicum.intershop.model;
+package ru.yandex.practicum.intershop.dto;
 
+import lombok.Builder;
+import lombok.Getter;
+
+@Builder
+@Getter
 public class Paging {
     Integer pageNumber;
     Integer pageSize;
