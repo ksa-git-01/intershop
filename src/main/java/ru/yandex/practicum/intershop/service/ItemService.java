@@ -19,7 +19,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ItemService {
     private final ItemRepository itemRepository;
-    private final CartRepository cartRepository;
+
     public Page<Item> findAll(String search, ItemSort sort, Integer pageNumber, Integer pageSize) {
         if (search == null) {
             return itemRepository.findAll(PageRequest.of(pageNumber, pageSize, itemSortToSort(sort)));
@@ -37,52 +37,5 @@ public class ItemService {
             case PRICE -> Sort.by("price").ascending();
             case NO -> Sort.unsorted();
         };
-    }
-
-    public void modifyCartItem(Long id, CartItemAction action) {
-        switch (action) {
-            case PLUS -> addToCart(id);
-            case MINUS -> removeOneFromCart(id);
-            case DELETE -> deleteAllFromCart(id);
-        }
-    }
-
-    private void deleteAllFromCart(Long id) {
-        cartRepository.findByItemId(id)
-                .ifPresentOrElse(cartRepository::delete,
-                        () -> {
-                            throw new EntityNotFoundException("Cart with item not found");
-                        }
-                );
-    }
-
-    private void removeOneFromCart(Long id) {
-        cartRepository.findByItemId(id)
-                .ifPresentOrElse(cart -> {
-                            cart.setCount(cart.getCount() - 1);
-                            cartRepository.save(cart);
-                        },
-                        () -> {
-                            throw new EntityNotFoundException("Cart with item not found");
-                        }
-                );
-    }
-
-    private void addToCart(Long id) {
-        cartRepository.findByItemId(id)
-                .ifPresentOrElse(cart -> {
-                            cart.setCount(cart.getCount() + 1);
-                            cartRepository.save(cart);
-                        },
-                        () -> {
-                            Item item = itemRepository.findById(id)
-                                    .orElseThrow(() -> new EntityNotFoundException("Item not found"));
-                            Cart cart = new Cart();
-                            cart.setItem(item);
-                            cart.setCount(1);
-                            cartRepository.save(cart);
-                        }
-
-                );
     }
 }

@@ -31,13 +31,15 @@ END $$;
 
 DO $$
 DECLARE
-    i INTEGER;
+    item RECORD;
     item_count INTEGER;
-    random_item_id BIGINT;
 BEGIN
-    FOR i IN 1..5 LOOP
-        SELECT id INTO random_item_id FROM item ORDER BY random() LIMIT 1;
-
+    FOR item IN (
+        SELECT id
+        FROM item
+        ORDER BY random()
+        LIMIT 5
+    ) LOOP
         item_count := (random() * 9)::INTEGER + 1;
 
         INSERT INTO cart (
@@ -46,7 +48,7 @@ BEGIN
             created_at,
             updated_at
         ) VALUES (
-            random_item_id,
+            item.id,
             item_count,
             CURRENT_TIMESTAMP - (random() * 7)::INTEGER * INTERVAL '1 day',
             CASE WHEN random() > 0.5 THEN NULL ELSE CURRENT_TIMESTAMP - (random() * 3)::INTEGER * INTERVAL '1 day' END

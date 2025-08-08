@@ -7,7 +7,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class ItemMainDto {
+public class ItemDto {
     private Long id;
     private String title;
     private String description;

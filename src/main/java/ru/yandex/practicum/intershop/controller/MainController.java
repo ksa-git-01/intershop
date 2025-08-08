@@ -1,7 +1,6 @@
 package ru.yandex.practicum.intershop.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.hibernate.cache.spi.support.AbstractReadWriteAccess;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,11 +9,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.yandex.practicum.intershop.dto.CartItemAction;
-import ru.yandex.practicum.intershop.dto.ItemMainDto;
+import ru.yandex.practicum.intershop.dto.ItemDto;
 import ru.yandex.practicum.intershop.dto.Paging;
 import ru.yandex.practicum.intershop.mapper.ItemMapper;
 import ru.yandex.practicum.intershop.model.Item;
 import ru.yandex.practicum.intershop.dto.ItemSort;
+import ru.yandex.practicum.intershop.service.CartService;
 import ru.yandex.practicum.intershop.service.ItemService;
 
 import java.util.ArrayList;
@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class MainController {
     private final ItemService itemService;
+    private final CartService cartService;
     private final ItemMapper itemMapper;
     @GetMapping("/")
     public String redirectToMain() {
@@ -54,16 +55,16 @@ public class MainController {
     @PostMapping("/main/items/{id}")
     public String modifyCartItem (@PathVariable(name = "id") Long id,
                                   @RequestParam(name = "action") CartItemAction action) {
-        itemService.modifyCartItem(id, action);
+        cartService.modifyCartByItem(id, action);
         return "redirect:/main/items";
     }
-    private List<List<ItemMainDto>> getItemsForModel(List<Item> items) {
+    private List<List<ItemDto>> getItemsForModel(List<Item> items) {
         return new ArrayList<>(IntStream.range(0, items.size())
                 .boxed()
                 .collect(Collectors.groupingBy(
                         index -> index / 3,
                         Collectors.mapping(
-                                index -> itemMapper.itemToItemMainDto(items.get(index)),
+                                index -> itemMapper.itemToItemDto(items.get(index)),
                                 Collectors.toList())
                 ))
                 .values());
