@@ -6,7 +6,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import ru.yandex.practicum.intershop.dto.CartItemAction;
 import ru.yandex.practicum.intershop.dto.ItemSort;
 import ru.yandex.practicum.intershop.dto.Paging;
 import ru.yandex.practicum.intershop.mapper.ItemMapper;
@@ -30,5 +32,12 @@ public class ItemController {
         Optional<Item> item = itemService.findItemById(id);
         item.ifPresent(value -> model.addAttribute("item", itemMapper.itemToItemDto(value)));
         return "item";
+    }
+
+    @PostMapping("/items/{id}")
+    public String modifyCartItem (@PathVariable(name = "id") Long id,
+                                  @RequestParam(name = "action") CartItemAction action) {
+        cartService.modifyCartByItem(id, action);
+        return "redirect:/items/{id}";
     }
 }
