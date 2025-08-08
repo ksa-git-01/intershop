@@ -20,6 +20,10 @@ import java.util.Optional;
 public class ItemService {
     private final ItemRepository itemRepository;
 
+    public Optional<Item> findItemById(Long id) {
+        return itemRepository.findById(id);
+    }
+
     public Page<Item> findAll(String search, ItemSort sort, Integer pageNumber, Integer pageSize) {
         if (search == null) {
             return itemRepository.findAll(PageRequest.of(pageNumber, pageSize, itemSortToSort(sort)));
