@@ -2,8 +2,6 @@ package ru.yandex.practicum.intershop.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,18 +11,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 public class CartControllerTest extends BasicConfigIntegrationTest{
-    @Autowired
-    private MockMvc mockMvc;
-
     @BeforeEach
     void setUpData() {
-        jdbcTemplate.update("INSERT INTO item(title, description, filename, count, price) VALUES (?,?,?,?,?)",
-                "Товар 1", "Описание товара 1", "image1.jpg", 100, 999.99);
-        jdbcTemplate.update("INSERT INTO item(title, description, filename, count, price) VALUES (?,?,?,?,?)",
-                "Товар 2", "Описание товара 2", "image2.jpg", 200, 199.50);
-
-        jdbcTemplate.update("INSERT INTO cart(item_id, count) VALUES (?,?)", 1L, 2);
-        jdbcTemplate.update("INSERT INTO cart(item_id, count) VALUES (?,?)", 2L, 3);
+        insertItem("Товар 1", "Описание товара 1", "image1.jpg", 100, 999.99);
+        insertItem("Товар 2", "Описание товара 2", "image2.jpg", 200, 199.50);
+        insertCart(1L, 2);
+        insertCart(2L, 3);
     }
 
     @Test
