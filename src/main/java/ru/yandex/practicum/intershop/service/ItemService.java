@@ -42,4 +42,15 @@ public class ItemService {
             case NO -> Sort.unsorted();
         };
     }
+
+    public Long addItem(String title, String description, Integer count, Double price, String filename) {
+        Item item = new Item();
+        item.setTitle(title);
+        item.setDescription(description);
+        item.setCount(count);
+        item.setPrice(price);
+        item.setFilename(filename);
+
+        return itemRepository.save(item).getId();
+    }
 }

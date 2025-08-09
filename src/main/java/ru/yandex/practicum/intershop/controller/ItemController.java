@@ -4,18 +4,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import ru.yandex.practicum.intershop.dto.CartItemAction;
 import ru.yandex.practicum.intershop.dto.ItemSort;
 import ru.yandex.practicum.intershop.dto.Paging;
 import ru.yandex.practicum.intershop.mapper.ItemMapper;
 import ru.yandex.practicum.intershop.model.Item;
 import ru.yandex.practicum.intershop.service.CartService;
+import ru.yandex.practicum.intershop.service.FileService;
 import ru.yandex.practicum.intershop.service.ItemService;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,6 +25,7 @@ public class ItemController {
     private final ItemService itemService;
     private final CartService cartService;
     private final ItemMapper itemMapper;
+    private final FileService fileService;
 
     @GetMapping("/items/{id}")
     public String getItem(@PathVariable(name = "id") Long id,
@@ -39,5 +40,21 @@ public class ItemController {
                                   @RequestParam(name = "action") CartItemAction action) {
         cartService.modifyCartByItem(id, action);
         return "redirect:/items/{id}";
+    }
+
+    @GetMapping("/items/add")
+    public String showAddItemForm(Model model) {
+        return "add-item";
+    }
+
+    @PostMapping("/items/add")
+    public String addPost(@RequestParam("title") String title,
+                        @RequestParam("description") String description,
+                        @RequestParam("count") Integer count,
+                        @RequestParam("price") Double price,
+                        @RequestParam(value = "image", required = false) MultipartFile image) {
+        String filename = fileService.saveImage(image);
+        Long itemId = itemService.addItem(title, description, count, price, filename);
+        return "redirect:/items/" + itemId;
     }
 }

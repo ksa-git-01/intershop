@@ -13,6 +13,9 @@
     <a href="/cart/items" style="float:right;">
         <b>КОРЗИНА &cudarrr;</b>
     </a>
+    <a href="/items/add" style="float:right;">
+        <b>ДОБАВИТЬ ТОВАР &cudarrr;</b>
+    </a>
     <table style="width:70%;margin-left:auto;margin-right:auto;">
         <tr>
             <td>
@@ -54,7 +57,7 @@
                     <tr>
                         <td>
                             <a th:href="${'/items/'+item.getId}">
-                                <img width="300" height="300" th:src="${'http://localhost:8080/'+item.getImgPath}">
+                                <img width="300" height="300" th:src="${'http://localhost:18080/images/'+item.getImgPath}">
                             </a>
                         </td>
                     </tr>
