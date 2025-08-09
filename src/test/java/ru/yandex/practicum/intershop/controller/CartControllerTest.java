@@ -3,16 +3,7 @@ package ru.yandex.practicum.intershop.controller;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,37 +12,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
-@SpringBootTest
-@Testcontainers
-@Sql(scripts = "/test-schema.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-@AutoConfigureMockMvc
-public class CartControllerTest {
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16.9-alpine")
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test");
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.sql.init.mode", () -> "never");
-    }
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+public class CartControllerTest extends BasicConfigIntegrationTest{
     @Autowired
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUpData() {
-        jdbcTemplate.update("DELETE FROM order_items");
-        jdbcTemplate.update("DELETE FROM orders");
-        jdbcTemplate.update("DELETE FROM cart");
-        jdbcTemplate.update("DELETE FROM item");
-
         jdbcTemplate.update("INSERT INTO item(title, description, filename, count, price) VALUES (?,?,?,?,?)",
                 "Товар 1", "Описание товара 1", "image1.jpg", 100, 999.99);
         jdbcTemplate.update("INSERT INTO item(title, description, filename, count, price) VALUES (?,?,?,?,?)",
