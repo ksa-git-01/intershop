@@ -3,9 +3,9 @@ package ru.yandex.practicum.intershop.service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.intershop.dto.CartDto;
+import ru.yandex.practicum.intershop.dto.CartView;
 import ru.yandex.practicum.intershop.dto.CartItemAction;
-import ru.yandex.practicum.intershop.dto.ItemDto;
+import ru.yandex.practicum.intershop.dto.ItemView;
 import ru.yandex.practicum.intershop.mapper.ItemMapper;
 import ru.yandex.practicum.intershop.model.Cart;
 import ru.yandex.practicum.intershop.model.Item;
@@ -72,34 +72,34 @@ public class CartService {
                 );
     }
 
-    public CartDto getCart() {
+    public CartView getCart() {
         List<Cart> cart = cartRepository.findAll();
         if (cart.isEmpty()) {
-            return CartDto.builder()
+            return CartView.builder()
                     .items(new ArrayList<>())
                     .total(0D)
                     .empty(true)
                     .build();
         }
-        List<ItemDto> items = cart.stream()
+        List<ItemView> items = cart.stream()
                 .map(c -> {
-                    ItemDto itemDto = itemMapper.itemToItemDto(c.getItem());
+                    ItemView itemDto = itemMapper.itemToItemDto(c.getItem());
                     itemDto.setCount(c.getCount());
                     itemDto.setPrice(roundToTwoDecimals(c.getCount() * c.getItem().getPrice()));
                     return itemDto;
                 })
-                .sorted(Comparator.comparing(ItemDto::getTitle))
+                .sorted(Comparator.comparing(ItemView::getTitle))
                 .toList();
-         return CartDto.builder()
+         return CartView.builder()
                 .items(items)
                 .total(calculateTotal(items))
                 .empty(false)
                 .build();
     }
-    private Double calculateTotal(List<ItemDto> items) {
+    private Double calculateTotal(List<ItemView> items) {
         return roundToTwoDecimals(
                 items.stream()
-                        .mapToDouble(ItemDto::getPrice)
+                        .mapToDouble(ItemView::getPrice)
                         .sum()
         );
     }

@@ -27,7 +27,7 @@ public class ItemController {
     private final ItemMapper itemMapper;
 
     @GetMapping("/items/{id}")
-    public String showMain(@PathVariable(name = "id") Long id,
+    public String getItem(@PathVariable(name = "id") Long id,
                            Model model) {
         Optional<Item> item = itemService.findItemById(id);
         item.ifPresent(value -> model.addAttribute("item", itemMapper.itemToItemDto(value)));

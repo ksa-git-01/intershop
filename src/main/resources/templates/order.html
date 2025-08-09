@@ -20,15 +20,15 @@
 <table style="width:70%;margin-left:auto;margin-right:auto;">
     <tr>
         <td>
-            <h2 th:text="${'Заказ №'+order.id()}"></h2>
+            <h2 th:text="${'Заказ №'+order.id}"></h2>
         </td>
     </tr>
-    <tr th:each="item : ${order.items()}">
+    <tr th:each="item : ${order.items}">
         <td>
             <table>
                 <tr>
                     <td>
-                        <a th:href="${'/items/'+item.getId()}">
+                        <a th:href="${'/items/'+item.getId}">
                             <img width="300" height="300" th:src="${'http://localhost:8080/'+item.getImgPath()}">
                         </a>
                     </td>

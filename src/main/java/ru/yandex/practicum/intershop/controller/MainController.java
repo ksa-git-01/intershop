@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.yandex.practicum.intershop.dto.CartItemAction;
-import ru.yandex.practicum.intershop.dto.ItemDto;
+import ru.yandex.practicum.intershop.dto.ItemView;
 import ru.yandex.practicum.intershop.dto.Paging;
 import ru.yandex.practicum.intershop.mapper.ItemMapper;
 import ru.yandex.practicum.intershop.model.Item;
@@ -58,7 +58,7 @@ public class MainController {
         cartService.modifyCartByItem(id, action);
         return "redirect:/main/items";
     }
-    private List<List<ItemDto>> getItemsForModel(List<Item> items) {
+    private List<List<ItemView>> getItemsForModel(List<Item> items) {
         return new ArrayList<>(IntStream.range(0, items.size())
                 .boxed()
                 .collect(Collectors.groupingBy(
