@@ -1,0 +1,47 @@
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS cart;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS item;
+
+CREATE TABLE IF NOT EXISTS item (
+  id BIGSERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  filename VARCHAR(500),
+  count INTEGER NOT NULL,
+  price NUMERIC(10,2) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS cart (
+  id BIGSERIAL PRIMARY KEY,
+  item_id BIGINT,
+  count INTEGER NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP,
+  CONSTRAINT fk_cart_item
+        FOREIGN KEY (item_id)
+        REFERENCES item(id)
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id BIGSERIAL PRIMARY KEY,
+  item_id BIGINT,
+  order_id BIGINT,
+  count INTEGER NOT NULL,
+  price NUMERIC(10,2) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_order_items_item
+        FOREIGN KEY (item_id)
+        REFERENCES item(id),
+  CONSTRAINT fk_order_items_orders
+        FOREIGN KEY (order_id)
+        REFERENCES orders(id)
+);
