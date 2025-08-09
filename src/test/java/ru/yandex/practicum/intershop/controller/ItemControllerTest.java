@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
 import ru.yandex.practicum.intershop.service.FileService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,7 +15,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-public class ItemControllerTest extends BasicConfigIntegrationTest{
+public class ItemControllerTest extends BasicTestConfiguration {
     @MockitoBean
     private FileService fileService;
 

@@ -2,6 +2,7 @@ package ru.yandex.practicum.intershop.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,7 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
-public class CartControllerTest extends BasicConfigIntegrationTest{
+public class CartControllerTest extends BasicTestConfiguration {
     @BeforeEach
     void setUpData() {
         insertItem("Товар 1", "Описание товара 1", "image1.jpg", 100, 999.99);

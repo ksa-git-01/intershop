@@ -1,9 +1,10 @@
-package ru.yandex.practicum.intershop.controller;
+package ru.yandex.practicum.intershop.configuration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -15,21 +16,18 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Testcontainers
 @Sql(scripts = "/test-schema.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
-public abstract class BasicConfigIntegrationTest {
-    @Container
-    protected static final PostgreSQLContainer<?> POSTGRES =
-            new PostgreSQLContainer<>("postgres:16.9-alpine")
-                    .withDatabaseName("testdb")
-                    .withUsername("test")
-                    .withPassword("test");
+public abstract class BasicTestConfiguration {
+    static {
+        PostgresTestContainer.getInstance();
+    }
 
     @DynamicPropertySource
-    static void dbProps(DynamicPropertyRegistry r) {
-        r.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        r.add("spring.datasource.username", POSTGRES::getUsername);
-        r.add("spring.datasource.password", POSTGRES::getPassword);
+    static void propertySource(DynamicPropertyRegistry r) {
+        var c = PostgresTestContainer.getInstance();
+        r.add("spring.datasource.url", c::getJdbcUrl);
+        r.add("spring.datasource.username", c::getUsername);
+        r.add("spring.datasource.password", c::getPassword);
         r.add("spring.sql.init.mode", () -> "never");
     }
 

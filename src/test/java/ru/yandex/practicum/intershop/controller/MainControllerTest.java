@@ -2,12 +2,13 @@ package ru.yandex.practicum.intershop.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-class MainControllerTest extends BasicConfigIntegrationTest {
+class MainControllerTest extends BasicTestConfiguration {
 
     @BeforeEach
     void setUpData() {
