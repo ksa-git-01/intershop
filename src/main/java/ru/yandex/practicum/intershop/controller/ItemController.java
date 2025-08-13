@@ -1,26 +1,24 @@
 package ru.yandex.practicum.intershop.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.yandex.practicum.intershop.dto.CartItemAction;
-import ru.yandex.practicum.intershop.dto.ItemSort;
-import ru.yandex.practicum.intershop.dto.Paging;
 import ru.yandex.practicum.intershop.mapper.ItemMapper;
 import ru.yandex.practicum.intershop.model.Item;
 import ru.yandex.practicum.intershop.service.CartService;
 import ru.yandex.practicum.intershop.service.FileService;
 import ru.yandex.practicum.intershop.service.ItemService;
+import jakarta.validation.constraints.Min;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
+@Validated
 public class ItemController {
     private final ItemService itemService;
     private final CartService cartService;
@@ -48,10 +46,10 @@ public class ItemController {
     }
 
     @PostMapping("/items/add")
-    public String addPost(@RequestParam("title") String title,
+    public String addItem(@RequestParam("title") String title,
                         @RequestParam("description") String description,
-                        @RequestParam("count") Integer count,
-                        @RequestParam("price") Double price,
+                        @RequestParam("count") @Min(value = 1) Integer count,
+                        @RequestParam("price") @Min(value = 1) Double price,
                         @RequestParam(value = "image", required = false) MultipartFile image) {
         String filename = fileService.saveImage(image);
         Long itemId = itemService.addItem(title, description, count, price, filename);

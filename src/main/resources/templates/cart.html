@@ -19,7 +19,7 @@
             <table>
                 <tr>
                     <td>
-                        <img width="300" height="300" th:src="${'http://localhost:18080/images/'+item.getImgPath()}">
+                        <img width="300" height="300" th:src="@{/images/{filename}(filename=${item.imgPath})}">
                     </td>
                 </tr>
                 <tr>
