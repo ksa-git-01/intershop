@@ -19,6 +19,7 @@ import ru.yandex.practicum.intershop.service.ItemService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -38,6 +39,13 @@ public class MainController {
                            @RequestParam(name = "pageNumber", defaultValue = "0", required = false) Integer pageNumber,
                            @RequestParam(name = "pageSize", defaultValue = "10", required = false) Integer pageSize,
                            Model model) {
+        if (pageNumber < 0) {
+            pageNumber = 0;
+        }
+        if (!Set.of(5, 10, 20, 50, 100).contains(pageSize)) {
+            pageSize = 10;
+        }
+
         Page<Item> itemsPage = itemService.findAll(search, sort, pageNumber, pageSize);
         List<Item> itemList = itemsPage.getContent();
 
