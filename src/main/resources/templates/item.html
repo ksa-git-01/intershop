@@ -18,7 +18,7 @@
     </a>
     <div style="width:70%;margin-left:auto;margin-right:auto;">
         <p>
-            <img width="300" height="300" th:src="${'http://localhost:18080/images/'+item.getImgPath()}">
+            <img width="300" height="300" th:src="@{/images/{filename}(filename=${item.imgPath})}">
         </p>
         <p>
             <b th:text="${item.getTitle()}"></b>
