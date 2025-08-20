@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import reactor.core.publisher.Mono;
 import ru.yandex.practicum.intershop.service.FileService;
 
+import java.util.Objects;
+
 @Controller
 @RequiredArgsConstructor
 public class ImageController {
@@ -20,7 +22,7 @@ public class ImageController {
     @ResponseBody
     public Mono<ResponseEntity<Resource>> getImage(@PathVariable(name = "filename") String filename) {
         return fileService.getImageResource(filename)
-                .filter(resource -> resource != null)
+                .filter(Objects::nonNull)
                 .zipWith(fileService.getImageContentType(filename))
                 .map(tuple -> {
                     Resource resource = tuple.getT1();

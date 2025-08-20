@@ -21,7 +21,7 @@ public class FileService {
     private String imageDir;
 
     public Mono<String> saveImage(FilePart filePart) {
-        if (filePart == null || filePart.filename() == null || filePart.filename().isEmpty()) {
+        if (filePart == null) {
             return Mono.just("");
         }
 
