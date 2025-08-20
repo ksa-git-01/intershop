@@ -35,12 +35,12 @@ DECLARE
     item_count INTEGER;
 BEGIN
     FOR item IN (
-        SELECT id
+        SELECT id, count
         FROM item
         ORDER BY random()
         LIMIT 5
     ) LOOP
-        item_count := (random() * 9)::INTEGER + 1;
+        item_count := CASE WHEN item.count > 1 THEN item.count - 1 ELSE 1 END;
 
         INSERT INTO cart (
             item_id,
