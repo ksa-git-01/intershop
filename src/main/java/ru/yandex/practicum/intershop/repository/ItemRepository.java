@@ -11,4 +11,9 @@ public interface ItemRepository extends R2dbcRepository<Item, Long> {
             String searchDescriptionString,
             Pageable pageable
     );
+
+    Flux<Item> findAllByTitleContainsIgnoreCaseOrDescriptionContainsIgnoreCase(
+            String searchTitleString,
+            String searchDescriptionString
+    );
 }
