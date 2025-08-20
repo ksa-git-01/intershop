@@ -32,8 +32,7 @@ public class ItemController {
     public Mono<String> getItem(@PathVariable(name = "id") Long id, Model model) {
         return itemService.findItemById(id)
                 .doOnNext(item -> model.addAttribute("item", itemMapper.itemToItemDto(item)))
-                .thenReturn("item")
-                .onErrorReturn("error"); // Если товар не найден, показываем страницу ошибки
+                .thenReturn("item");
     }
 
     @PostMapping("/items/{id}")
@@ -60,21 +59,16 @@ public class ItemController {
     public Mono<String> addItem(ServerWebExchange exchange) {
         return exchange.getMultipartData()
                 .flatMap(this::processAddItemForm)
-                .onErrorResume(throwable -> {
-                    // В случае ошибки валидации или другой ошибки
-                    return Mono.just("redirect:/items/add?error=true");
-                });
+                .onErrorResume(throwable -> Mono.just("redirect:/items/add?error=true"));
     }
 
     private Mono<String> processAddItemForm(MultiValueMap<String, Part> parts) {
         try {
-            // Извлекаем обязательные параметры
             String title = getFormValue(parts, "title");
             String description = getFormValue(parts, "description");
             Integer count = Integer.valueOf(getFormValue(parts, "count"));
             Double price = Double.valueOf(getFormValue(parts, "price"));
 
-            // Валидация
             if (count < 1) {
                 return Mono.error(new IllegalArgumentException("Count must be at least 1"));
             }
@@ -82,7 +76,6 @@ public class ItemController {
                 return Mono.error(new IllegalArgumentException("Price must be at least 1"));
             }
 
-            // Получаем файл изображения (опционально)
             Mono<String> filenameMono = getImageFile(parts)
                     .flatMap(fileService::saveImage)
                     .defaultIfEmpty("");
@@ -109,6 +102,6 @@ public class ItemController {
         if (imagePart instanceof FilePart filePart) {
             return Mono.just(filePart);
         }
-        return Mono.empty(); // Файл не загружен
+        return Mono.empty();
     }
 }
