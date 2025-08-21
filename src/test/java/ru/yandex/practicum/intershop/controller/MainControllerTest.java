@@ -2,11 +2,12 @@ package ru.yandex.practicum.intershop.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class MainControllerTest extends BasicTestConfiguration {
 
@@ -17,70 +18,99 @@ class MainControllerTest extends BasicTestConfiguration {
     }
 
     @Test
-    void rootRedirectsToMain() throws Exception {
-        mockMvc.perform(get("/"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/main/items"));
+    void rootRedirectsToMain() {
+        webTestClient.get()
+                .uri("/")
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/main/items");
     }
 
     @Test
-    void getMainItems() throws Exception {
-        mockMvc.perform(get("/main/items")
-                        .param("search", "")
-                        .param("sort", "NO")
-                        .param("pageNumber", "0")
-                        .param("pageSize", "10"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("main"))
-                .andExpect(model().attributeExists("items", "search", "sort", "paging"));
+    void getMainItems() {
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/main/items")
+                        .queryParam("search", "")
+                        .queryParam("sort", "NO")
+                        .queryParam("pageNumber", "0")
+                        .queryParam("pageSize", "10")
+                        .build())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .value(body -> {
+                    assertThat(body).contains("Витрина товаров");
+                    assertThat(body).contains("Товар 1");
+                });
     }
 
     @Test
-    void modifyCartItemPlusItem() throws Exception {
+    void modifyCartItemPlusItem() {
         long itemId = insertItem("Товар 3", "Описание товара 3", "image3.jpg", 5, 2999.00);
         insertCart(itemId, 1);
 
-        Integer before = jdbcTemplate.queryForObject("SELECT count FROM cart WHERE item_id=?", Integer.class, itemId);
+        Integer before = getCartCount(itemId).block();
         assertThat(before).isEqualTo(1);
 
-        mockMvc.perform(post("/main/items/{id}", itemId).param("action", "PLUS"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/main/items"));
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("action", "PLUS");
 
-        Integer after = jdbcTemplate.queryForObject("SELECT count FROM cart WHERE item_id=?", Integer.class, itemId);
+        webTestClient.post()
+                .uri("/main/items/{id}", itemId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue(formData)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/main/items");
+
+        Integer after = getCartCount(itemId).block();
         assertThat(after).isEqualTo(2);
     }
 
     @Test
-    void modifyCartItemMinusItem() throws Exception {
+    void modifyCartItemMinusItem() {
         long itemId = insertItem("Товар 3", "Описание товара 3", "image3.jpg", 5, 2999.00);
         insertCart(itemId, 2);
 
-        Integer before = jdbcTemplate.queryForObject("SELECT count FROM cart WHERE item_id=?", Integer.class, itemId);
+        Integer before = getCartCount(itemId).block();
         assertThat(before).isEqualTo(2);
 
-        mockMvc.perform(post("/main/items/{id}", itemId).param("action", "MINUS"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/main/items"));
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("action", "MINUS");
 
-        Integer after = jdbcTemplate.queryForObject("SELECT count FROM cart WHERE item_id=?", Integer.class, itemId);
+        webTestClient.post()
+                .uri("/main/items/{id}", itemId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue(formData)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/main/items");
+
+        Integer after = getCartCount(itemId).block();
         assertThat(after).isEqualTo(1);
     }
 
     @Test
-    void modifyCartItemDeleteItem() throws Exception {
+    void modifyCartItemDeleteItem() {
         long itemId = insertItem("Товар 3", "Описание товара 3", "image3.jpg", 5, 2999.00);
         insertCart(itemId, 2);
 
-        Integer before = jdbcTemplate.queryForObject("SELECT count FROM cart WHERE item_id=?", Integer.class, itemId);
+        Integer before = getCartCount(itemId).block();
         assertThat(before).isEqualTo(2);
 
-        mockMvc.perform(post("/main/items/{id}", itemId).param("action", "DELETE"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/main/items"));
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("action", "DELETE");
 
-        Integer after = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM cart WHERE item_id=?", Integer.class, itemId);
+        webTestClient.post()
+                .uri("/main/items/{id}", itemId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue(formData)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/main/items");
+
+        Integer after = getCartItemsCount(itemId).block();
         assertThat(after).isEqualTo(0);
     }
 }
-

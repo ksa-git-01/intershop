@@ -1,19 +1,18 @@
-package ru.yandex.practicum.intershop.jpa;
+package ru.yandex.practicum.intershop.r2dbc;
 
-import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
 import ru.yandex.practicum.intershop.model.Item;
 import ru.yandex.practicum.intershop.repository.ItemRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ItemTest extends BasicTestConfiguration {
-    @Autowired ItemRepository itemRepository;
+class ItemTest extends BasicTestConfiguration {
+    @Autowired
+    ItemRepository itemRepository;
 
     @Test
-    @Transactional
     void createNew() {
         Item i = new Item();
         i.setTitle("Товар 1");
@@ -21,10 +20,11 @@ public class ItemTest extends BasicTestConfiguration {
         i.setFilename("image.jpg");
         i.setCount(10);
         i.setPrice(1999.99);
-        Item saved = itemRepository.save(i);
 
-        Item found = itemRepository.findById(saved.getId()).orElseThrow();
+        Item saved = itemRepository.save(i).block();
+        Item found = itemRepository.findById(saved.getId()).block();
 
+        assertThat(found).isNotNull();
         assertThat(found.getTitle()).isEqualTo("Товар 1");
         assertThat(found.getDescription()).isEqualTo("Описание 1");
         assertThat(found.getFilename()).isEqualTo("image.jpg");

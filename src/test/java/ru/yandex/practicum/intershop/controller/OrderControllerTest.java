@@ -5,8 +5,6 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class OrderControllerTest extends BasicTestConfiguration {
     private long firstItemId;
@@ -19,49 +17,54 @@ public class OrderControllerTest extends BasicTestConfiguration {
     }
 
     @Test
-    void getOrders() throws Exception {
+    void getOrders() {
         long orderId = insertOrder();
         insertOrderItem(orderId, firstItemId, 2, 1999.98);
 
-        mockMvc.perform(get("/orders"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("orders"))
-                .andExpect(model().attributeExists("orders"));
+        webTestClient.get()
+                .uri("/orders")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .value(body -> {
+                    assertThat(body).contains("Заказы");
+                });
     }
 
     @Test
-    void getOrderById() throws Exception {
+    void getOrderById() {
         long orderId = insertOrder();
         insertOrderItem(orderId, firstItemId, 1, 1999.98);
 
-        mockMvc.perform(get("/orders/{id}", orderId))
-                .andExpect(status().isOk())
-                .andExpect(view().name("order"))
-                .andExpect(model().attributeExists("order"))
-                .andExpect(model().attribute("newOrder", false));
+        webTestClient.get()
+                .uri("/orders/{id}", orderId)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .value(body -> {
+                    assertThat(body).contains("Заказ №" + orderId);
+                });
     }
 
     @Test
-    void buy() throws Exception {
+    void buy() {
         insertCart(firstItemId, 2);
         insertCart(secondItemId, 3);
 
-        Integer stockFirstBefore = jdbcTemplate.queryForObject(
-                "SELECT count FROM item WHERE id=?", Integer.class, firstItemId);
-        Integer stockSecondBefore = jdbcTemplate.queryForObject(
-                "SELECT count FROM item WHERE id=?", Integer.class, secondItemId);
+        Integer stockFirstBefore = getItemStock(firstItemId).block();
+        Integer stockSecondBefore = getItemStock(secondItemId).block();
 
-        mockMvc.perform(post("/buy"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("/orders/*?newOrder=true"));
+        webTestClient.post()
+                .uri("/buy")
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().valueMatches("Location", "/orders/\\d+\\?newOrder=true");
 
-        Integer ordersCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM orders", Integer.class);
-        Integer orderItemsCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM order_items", Integer.class);
-        Integer cartAfter = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM cart", Integer.class);
-        Integer stockFirstAfter = jdbcTemplate.queryForObject(
-                "SELECT count FROM item WHERE id=?", Integer.class, firstItemId);
-        Integer stockSecondAfter = jdbcTemplate.queryForObject(
-                "SELECT count FROM item WHERE id=?", Integer.class, secondItemId);
+        Integer ordersCount = getTotalCount("orders").block();
+        Integer orderItemsCount = getTotalCount("order_items").block();
+        Integer cartAfter = getTotalCount("cart").block();
+        Integer stockFirstAfter = getItemStock(firstItemId).block();
+        Integer stockSecondAfter = getItemStock(secondItemId).block();
 
         assertThat(ordersCount).isEqualTo(1);
         assertThat(orderItemsCount).isEqualTo(2);

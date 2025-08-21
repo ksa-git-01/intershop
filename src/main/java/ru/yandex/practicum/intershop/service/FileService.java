@@ -1,70 +1,97 @@
 package ru.yandex.practicum.intershop.service;
 
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Service
 public class FileService {
+
     @Value("${storage.image.path}")
     private String imageDir;
 
-    public String saveImage(MultipartFile image) {
-        String filename = null;
-        if (image != null && !image.isEmpty()) {
-            filename = getFilename(image);
-            Path uploadPath = Paths.get(imageDir);
-            Path filePath = uploadPath.resolve(filename);
-            try {
-                Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return filename;
-    }
-
-    public Resource getImageResource(String filename) throws IOException {
-        Path uploadDir = Paths.get(imageDir).toAbsolutePath().normalize();
-        Path filePath = uploadDir.resolve(filename).normalize();
-
-        Resource resource = new UrlResource(filePath.toUri());
-
-        if (!resource.exists() || !resource.isReadable()) {
-            return null;
+    public Mono<String> saveImage(FilePart filePart) {
+        if (filePart == null) {
+            return Mono.just("");
         }
 
-        return resource;
+        String filename = generateFilename(filePart.filename());
+
+        return Mono.fromCallable(() -> {
+                    Path uploadPath = Paths.get(imageDir);
+                    Path filePath = uploadPath.resolve(filename);
+
+                    try {
+                        Files.createDirectories(uploadPath);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to create upload directory", e);
+                    }
+
+                    return filePath;
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(filePath ->
+                        filePart.transferTo(filePath)
+                                .thenReturn(filename)
+                )
+                .onErrorMap(throwable -> new RuntimeException("Failed to save file", throwable));
     }
 
-    public String getImageContentType(String filename) {
-        try {
-            Path uploadDir = Paths.get(imageDir).toAbsolutePath().normalize();
-            Path filePath = uploadDir.resolve(filename).normalize();
+    public Mono<Resource> getImageResource(String filename) {
+        return Mono.fromCallable(() -> {
+                    Path uploadDir = Paths.get(imageDir).toAbsolutePath().normalize();
+                    Path filePath = uploadDir.resolve(filename).normalize();
 
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null || !contentType.startsWith("image/")) {
-                contentType = "image/jpeg";
-            }
+                    Resource resource = new UrlResource(filePath.toUri());
 
-            return contentType;
-        } catch (Exception e) {
-            return "image/jpeg";
+                    if (!resource.exists() || !resource.isReadable()) {
+                        return null;
+                    }
+
+                    return resource;
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .onErrorComplete();
+    }
+
+    public Mono<String> getImageContentType(String filename) {
+        return Mono.fromCallable(() -> {
+                    try {
+                        Path uploadDir = Paths.get(imageDir).toAbsolutePath().normalize();
+                        Path filePath = uploadDir.resolve(filename).normalize();
+
+                        String contentType = Files.probeContentType(filePath);
+                        if (contentType == null || !contentType.startsWith("image/")) {
+                            contentType = "image/jpeg";
+                        }
+
+                        return contentType;
+                    } catch (Exception e) {
+                        return "image/jpeg";
+                    }
+                })
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    private String generateFilename(String originalFilename) {
+        if (originalFilename == null || originalFilename.isEmpty()) {
+            return UUID.randomUUID() + ".jpg";
         }
-    }
 
-    private String getFilename(MultipartFile image) {
-        String fileExtension = image.getOriginalFilename().substring(image.getOriginalFilename().lastIndexOf("."));
+        int lastDotIndex = originalFilename.lastIndexOf(".");
+        String fileExtension = lastDotIndex > 0 ?
+                originalFilename.substring(lastDotIndex) : ".jpg";
+
         return UUID.randomUUID() + fileExtension;
     }
 }

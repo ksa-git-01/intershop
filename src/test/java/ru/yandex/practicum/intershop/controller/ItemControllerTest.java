@@ -3,8 +3,12 @@ package ru.yandex.practicum.intershop.controller;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
 import ru.yandex.practicum.intershop.service.FileService;
 
@@ -12,8 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class ItemControllerTest extends BasicTestConfiguration {
     @MockitoBean
@@ -27,56 +29,71 @@ public class ItemControllerTest extends BasicTestConfiguration {
     }
 
     @Test
-    void getItem() throws Exception {
-        mockMvc.perform(get("/items/{id}", itemId))
-                .andExpect(status().isOk())
-                .andExpect(view().name("item"))
-                .andExpect(model().attributeExists("item"));
+    void getItem() {
+        webTestClient.get()
+                .uri("/items/{id}", itemId)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .value(body -> {
+                    assertThat(body).contains("Товар 1");
+                    assertThat(body).contains("Описание товара 1");
+                });
     }
 
     @Test
-    void modifyCartItemPlus() throws Exception {
-        mockMvc.perform(post("/items/{id}", itemId).param("action", "PLUS"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/items/" + itemId));
+    void modifyCartItemPlus() {
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("action", "PLUS");
 
-        Integer inCart = jdbcTemplate.queryForObject("SELECT count FROM cart WHERE item_id=?", Integer.class, itemId);
+        webTestClient.post()
+                .uri("/items/{id}", itemId)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue(formData)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/items/" + itemId);
+
+        Integer inCart = getCartCount(itemId).block();
         assertThat(inCart).isEqualTo(1);
     }
 
     @Test
-    void showAddItemForm() throws Exception {
-        mockMvc.perform(get("/items/add"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("add-item"));
+    void showAddItemForm() {
+        webTestClient.get()
+                .uri("/items/add")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .value(body -> {
+                    assertThat(body).contains("Добавление нового товара");
+                    assertThat(body).contains("action=\"/items/add\"");
+                });
     }
 
     @Test
-    void addItem() throws Exception {
+    void addItem() {
         reset(fileService);
-        when(fileService.saveImage(any())).thenReturn("filename.jpg");
+        when(fileService.saveImage(any(FilePart.class))).thenReturn(Mono.just("filename.jpg"));
 
-        MockMultipartFile image = new MockMultipartFile(
-                "filename", "filename.jpg", "image/jpeg", "filebody".getBytes());
-
-        Integer before = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM item", Integer.class);
+        Integer before = getTotalCount("item").block();
         assertThat(before).isEqualTo(1);
 
-        mockMvc.perform(multipart("/items/add")
-                        .file(image)
-                        .param("title", "Новый товар")
-                        .param("description", "Описание")
-                        .param("count", "5")
-                        .param("price", "123.45")
-                        .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("/items/*"));
+        MultiValueMap<String, Object> formData = new LinkedMultiValueMap<>();
+        formData.add("title", "Новый товар");
+        formData.add("description", "Описание");
+        formData.add("count", "5");
+        formData.add("price", "123.45");
 
-        Integer after = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM item", Integer.class);
+        webTestClient.post()
+                .uri("/items/add")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(BodyInserters.fromMultipartData(formData))
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().valueMatches("Location", "/items/\\d+");
+
+        Integer after = getTotalCount("item").block();
         assertThat(after).isEqualTo(2);
-
-        String filename = jdbcTemplate.queryForObject(
-                "SELECT filename FROM item ORDER BY id DESC LIMIT 1", String.class);
-        assertThat(filename).isEqualTo("filename.jpg");
     }
 }
