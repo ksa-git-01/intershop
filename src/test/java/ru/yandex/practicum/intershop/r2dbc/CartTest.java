@@ -10,20 +10,20 @@ import ru.yandex.practicum.intershop.repository.ItemRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CartRepositoryTest extends BasicTestConfiguration {
-    @Autowired
-    CartRepository cartRepository;
+class CartTest extends BasicTestConfiguration {
     @Autowired
     ItemRepository itemRepository;
+    @Autowired
+    CartRepository cartRepository;
 
     @Test
-    void findByItemId() {
+    void createNewItemAndCart() {
         Item item = new Item();
         item.setTitle("Товар 1");
         item.setDescription("Описание товара 1");
         item.setFilename("image.jpg");
         item.setCount(100);
-        item.setPrice(199.5);
+        item.setPrice(199.50);
 
         Item savedItem = itemRepository.save(item).block();
 
@@ -31,10 +31,11 @@ public class CartRepositoryTest extends BasicTestConfiguration {
         cart.setItemId(savedItem.getId());
         cart.setCount(3);
 
-        cartRepository.save(cart).block();
+        Cart savedCart = cartRepository.save(cart).block();
 
-        Cart found = cartRepository.findByItemId(savedItem.getId()).block();
+        Cart found = cartRepository.findById(savedCart.getId()).block();
         assertThat(found).isNotNull();
+        assertThat(found.getItemId()).isEqualTo(savedItem.getId());
         assertThat(found.getCount()).isEqualTo(3);
     }
 }
