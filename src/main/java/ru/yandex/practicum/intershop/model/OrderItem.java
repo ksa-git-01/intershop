@@ -1,34 +1,32 @@
 package ru.yandex.practicum.intershop.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.*;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "order_items")
+@Table("order_items")
 @Getter
 @Setter
 @NoArgsConstructor
 public class OrderItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    private Order order;
+    @Column("order_id")
+    private Long orderId;
 
-    @ManyToOne
-    @JoinColumn(name = "item_id")
-    private Item item;
+    @Column("item_id")
+    private Long itemId;
 
     private Integer count;
     private Double price;
 
-    @CreationTimestamp
+    @Column("created_at")
+    @CreatedDate
     private LocalDateTime createdAt;
 }

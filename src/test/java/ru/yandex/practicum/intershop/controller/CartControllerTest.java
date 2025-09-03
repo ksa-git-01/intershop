@@ -2,16 +2,15 @@ package ru.yandex.practicum.intershop.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 
 public class CartControllerTest extends BasicTestConfiguration {
+
     @BeforeEach
     void setUpData() {
         insertItem("Товар 1", "Описание товара 1", "image1.jpg", 100, 999.99);
@@ -21,54 +20,75 @@ public class CartControllerTest extends BasicTestConfiguration {
     }
 
     @Test
-    void getCartModel() throws Exception {
-        mockMvc.perform(get("/cart/items"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("cart"))
-                .andExpect(model().attributeExists("items"))
-                .andExpect(model().attributeExists("total"))
-                .andExpect(model().attributeExists("empty"));
+    void getCartModel() {
+        webTestClient.get()
+                .uri("/cart/items")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .value(body -> {
+                    assertThat(body).contains("Корзина товаров");
+                    assertThat(body).contains("Товар 1");
+                });
     }
 
     @Test
-    void modifyCartItemPlusItem() throws Exception {
-        Integer before = jdbcTemplate.queryForObject("SELECT count FROM cart WHERE item_id = 1", Integer.class);
+    void modifyCartItemPlusItem() {
+        Integer before = getCartCount(1L).block();
         assertThat(before).isEqualTo(2);
 
-        mockMvc.perform(post("/cart/items/{id}", 1L)
-                        .param("action", "PLUS"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cart/items"));
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("action", "PLUS");
 
-        Integer after = jdbcTemplate.queryForObject("SELECT count FROM cart WHERE item_id = 1", Integer.class);
+        webTestClient.post()
+                .uri("/cart/items/{id}", 1L)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue(formData)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/cart/items");
+
+        Integer after = getCartCount(1L).block();
         assertThat(after).isEqualTo(3);
     }
 
     @Test
-    void modifyCartItemMinus() throws Exception {
-        Integer before = jdbcTemplate.queryForObject("SELECT count FROM cart WHERE item_id = 2", Integer.class);
+    void modifyCartItemMinus() {
+        Integer before = getCartCount(2L).block();
         assertThat(before).isEqualTo(3);
 
-        mockMvc.perform(post("/cart/items/{id}", 2L)
-                        .param("action", "MINUS"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cart/items"));
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("action", "MINUS");
 
-        Integer after = jdbcTemplate.queryForObject("SELECT count FROM cart WHERE item_id = 2", Integer.class);
+        webTestClient.post()
+                .uri("/cart/items/{id}", 2L)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue(formData)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/cart/items");
+
+        Integer after = getCartCount(2L).block();
         assertThat(after).isEqualTo(2);
     }
 
     @Test
-    void modifyCartItemDelete() throws Exception {
-        Integer before = jdbcTemplate.queryForObject("SELECT count FROM cart WHERE item_id = 2", Integer.class);
+    void modifyCartItemDelete() {
+        Integer before = getCartCount(2L).block();
         assertThat(before).isEqualTo(3);
 
-        mockMvc.perform(post("/cart/items/{id}", 2L)
-                        .param("action", "DELETE"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cart/items"));
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("action", "DELETE");
 
-        Integer after = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM cart WHERE item_id = 2", Integer.class);
+        webTestClient.post()
+                .uri("/cart/items/{id}", 2L)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue(formData)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/cart/items");
+
+        Integer after = getCartItemsCount(2L).block();
         assertThat(after).isEqualTo(0);
     }
 }

@@ -3,8 +3,9 @@ package ru.yandex.practicum.intershop.service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.intershop.dto.CartView;
+import reactor.core.publisher.Mono;
 import ru.yandex.practicum.intershop.dto.CartItemAction;
+import ru.yandex.practicum.intershop.dto.CartView;
 import ru.yandex.practicum.intershop.dto.ItemView;
 import ru.yandex.practicum.intershop.mapper.ItemMapper;
 import ru.yandex.practicum.intershop.model.Cart;
@@ -25,77 +26,112 @@ public class CartService {
     private final ItemRepository itemRepository;
     private final ItemMapper itemMapper;
 
-    public void modifyCartByItem(Long id, CartItemAction action) {
-        switch (action) {
+    public Mono<Void> modifyCartByItem(Long id, CartItemAction action) {
+        return switch (action) {
             case PLUS -> addItemToCart(id);
             case MINUS -> removeOneItemFromCart(id);
             case DELETE -> deleteItemFromCart(id);
-        }
+        };
     }
 
-    private void deleteItemFromCart(Long id) {
-        cartRepository.findByItemId(id)
-                .ifPresentOrElse(cartRepository::delete,
-                        () -> {
-                            throw new EntityNotFoundException("Cart with item not found");
-                        }
-                );
+    private Mono<Void> deleteItemFromCart(Long id) {
+        return cartRepository.findByItemId(id)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Cart with item not found")))
+                .flatMap(cartRepository::delete);
     }
 
-    private void removeOneItemFromCart(Long id) {
-        cartRepository.findByItemId(id)
-                .ifPresentOrElse(cart -> {
-                            cart.setCount(cart.getCount() - 1);
-                            cartRepository.save(cart);
-                        },
-                        () -> {
-                            throw new EntityNotFoundException("Cart with item not found");
-                        }
-                );
-    }
-
-    private void addItemToCart(Long id) {
-        cartRepository.findByItemId(id)
-                .ifPresentOrElse(cart -> {
-                            cart.setCount(cart.getCount() + 1);
-                            cartRepository.save(cart);
-                        },
-                        () -> {
-                            Item item = itemRepository.findById(id)
-                                    .orElseThrow(() -> new EntityNotFoundException("Item not found"));
-                            Cart cart = new Cart();
-                            cart.setItem(item);
-                            cart.setCount(1);
-                            cartRepository.save(cart);
-                        }
-
-                );
-    }
-
-    public CartView getCart() {
-        List<Cart> cart = cartRepository.findAll();
-        if (cart.isEmpty()) {
-            return CartView.builder()
-                    .items(new ArrayList<>())
-                    .total(0D)
-                    .empty(true)
-                    .build();
-        }
-        List<ItemView> items = cart.stream()
-                .map(c -> {
-                    ItemView itemDto = itemMapper.itemToItemDto(c.getItem());
-                    itemDto.setCount(c.getCount());
-                    itemDto.setPrice(roundToTwoDecimals(c.getCount() * c.getItem().getPrice()));
-                    return itemDto;
+    private Mono<Void> removeOneItemFromCart(Long id) {
+        return cartRepository.findByItemId(id)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Cart with item not found")))
+                .flatMap(cart -> {
+                    cart.setCount(cart.getCount() - 1);
+                    return cartRepository.save(cart);
                 })
+                .then();
+    }
+
+    private Mono<Void> addItemToCart(Long id) {
+        return cartRepository.findByItemId(id)
+                .flatMap(this::incrementCartItem)
+                .switchIfEmpty(createNewCartItem(id))
+                .then();
+    }
+
+    private Mono<Cart> incrementCartItem(Cart cart) {
+        cart.setCount(cart.getCount() + 1);
+        return cartRepository.save(cart);
+    }
+
+    private Mono<Cart> createNewCartItem(Long itemId) {
+        return itemRepository.findById(itemId)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Item not found")))
+                .flatMap(item -> {
+                    Cart cart = new Cart();
+                    cart.setItemId(item.getId());
+                    cart.setCount(1);
+                    return cartRepository.save(cart);
+                });
+    }
+
+    public Mono<CartView> getCart() {
+        return cartRepository.findAll()
+                .collectList()
+                .flatMap(this::buildCartView);
+    }
+
+    private Mono<CartView> buildCartView(List<Cart> cartList) {
+        if (cartList.isEmpty()) {
+            return Mono.just(createEmptyCartView());
+        }
+
+        return loadItemsForCart(cartList)
+                .map(items -> createCartViewWithItems(cartList, items));
+    }
+
+    private CartView createEmptyCartView() {
+        return CartView.builder()
+                .items(new ArrayList<>())
+                .total(0D)
+                .empty(true)
+                .build();
+    }
+
+    private Mono<List<Item>> loadItemsForCart(List<Cart> cartList) {
+        List<Long> itemIds = cartList.stream()
+                .map(Cart::getItemId)
+                .toList();
+
+        return itemRepository.findAllById(itemIds).collectList();
+    }
+
+    private CartView createCartViewWithItems(List<Cart> cartList, List<Item> items) {
+        List<ItemView> itemViews = cartList.stream()
+                .map(cart -> createItemView(cart, items))
                 .sorted(Comparator.comparing(ItemView::getTitle))
                 .toList();
-         return CartView.builder()
-                .items(items)
-                .total(calculateTotal(items))
+
+        return CartView.builder()
+                .items(itemViews)
+                .total(calculateTotal(itemViews))
                 .empty(false)
                 .build();
     }
+
+    private ItemView createItemView(Cart cart, List<Item> items) {
+        Item item = findItemById(cart.getItemId(), items);
+        ItemView itemView = itemMapper.itemToItemDto(item);
+        itemView.setCount(cart.getCount());
+        itemView.setPrice(roundToTwoDecimals(cart.getCount() * item.getPrice()));
+        return itemView;
+    }
+
+    private Item findItemById(Long itemId, List<Item> items) {
+        return items.stream()
+                .filter(item -> item.getId().equals(itemId))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Item not found"));
+    }
+
     private Double calculateTotal(List<ItemView> items) {
         return roundToTwoDecimals(
                 items.stream()
