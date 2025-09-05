@@ -1,6 +1,5 @@
 package ru.yandex.practicum.payment.service;
 
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
