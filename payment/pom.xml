@@ -67,8 +67,8 @@
 						<configuration>
 							<inputSpec>${project.basedir}/src/main/resources/payment-service-api.yaml</inputSpec>
 							<generatorName>spring</generatorName>
-							<apiPackage>com.example.payment.api</apiPackage>
-							<modelPackage>com.example.payment.model</modelPackage>
+							<apiPackage>ru.yandex.practicum.payment.api</apiPackage>
+							<modelPackage>ru.yandex.practicum.payment.model</modelPackage>
 							<configOptions>
 								<reactive>true</reactive>
 								<interfaceOnly>true</interfaceOnly>
