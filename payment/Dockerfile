@@ -10,19 +10,16 @@ COPY payment/pom.xml ./payment/
 # Скачиваем зависимости для всего проекта
 RUN mvn dependency:go-offline -B
 
-# Копируем openapi схему для генерации web клиента в store
 COPY payment/src ./payment/src
-COPY store/src ./store/src
 
-# Собираем только store модуль
-WORKDIR /app/store
+# Собираем только payment модуль
+WORKDIR /app/payment
 RUN mvn clean package -DskipTests
 
 FROM amazoncorretto:21
 WORKDIR /app
 
-COPY --from=build /app/store/target/*.jar app.jar
-RUN mkdir -p /app/uploads
+COPY --from=build /app/payment/target/*.jar app.jar
 
 EXPOSE 8080
 CMD ["java", "-jar", "app.jar"]
