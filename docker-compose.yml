@@ -15,6 +15,17 @@ services:
     networks:
       - intershop-network
 
+  redis:
+    image: redis:7.4-alpine
+    container_name: intershop-redis
+    ports:
+      - "${REDIS_PORT:-16379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - intershop-network
+    command: redis-server --appendonly yes
+
   store:
     build:
       context: .
@@ -24,12 +35,15 @@ services:
       - "${STORE_PORT:-18081}:8080"
     depends_on:
       - postgres
+      - redis
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=${POSTGRES_DB:-intershop}
       - DB_USER=${POSTGRES_USER:-intershop_user}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
       - uploads_data:/app/uploads
     networks:
@@ -48,6 +62,7 @@ services:
 volumes:
   postgres_data:
   uploads_data:
+  redis_data:
 
 networks:
   intershop-network:
