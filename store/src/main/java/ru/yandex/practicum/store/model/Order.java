@@ -1,4 +1,4 @@
-package ru.yandex.practicum.intershop.model;
+package ru.yandex.practicum.store.model;
 
 import org.springframework.data.annotation.*;
 import org.springframework.data.relational.core.mapping.Column;
@@ -9,18 +9,13 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Table("cart")
+@Table("orders")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Cart {
+public class Order {
     @Id
     private Long id;
-
-    @Column("item_id")
-    private Long itemId;
-
-    private Integer count;
 
     @Column("created_at")
     @CreatedDate

@@ -1,4 +1,4 @@
-package ru.yandex.practicum.intershop.controller;
+package ru.yandex.practicum.store.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.intershop.dto.CartItemAction;
-import ru.yandex.practicum.intershop.service.CartService;
+import ru.yandex.practicum.store.dto.CartItemAction;
+import ru.yandex.practicum.store.service.CartService;
 
 @Controller
 @RequiredArgsConstructor

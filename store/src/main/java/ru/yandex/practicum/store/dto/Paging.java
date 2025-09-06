@@ -1,4 +1,4 @@
-package ru.yandex.practicum.intershop.dto;
+package ru.yandex.practicum.store.dto;
 
 import lombok.Builder;
 import lombok.Getter;

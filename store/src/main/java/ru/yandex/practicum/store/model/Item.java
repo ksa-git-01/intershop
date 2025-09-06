@@ -1,4 +1,4 @@
-package ru.yandex.practicum.intershop.model;
+package ru.yandex.practicum.store.model;
 
 import org.springframework.data.annotation.*;
 import org.springframework.data.relational.core.mapping.Column;

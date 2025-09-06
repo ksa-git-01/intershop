@@ -1,10 +1,10 @@
-package ru.yandex.practicum.intershop.r2dbc;
+package ru.yandex.practicum.store.r2dbc;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
-import ru.yandex.practicum.intershop.model.Item;
-import ru.yandex.practicum.intershop.repository.ItemRepository;
+import ru.yandex.practicum.store.configuration.BasicTestConfiguration;
+import ru.yandex.practicum.store.model.Item;
+import ru.yandex.practicum.store.repository.ItemRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -1,4 +1,4 @@
-package ru.yandex.practicum.intershop.controller;
+package ru.yandex.practicum.store.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.intershop.service.FileService;
+import ru.yandex.practicum.store.service.FileService;
 
 import java.util.Objects;
 

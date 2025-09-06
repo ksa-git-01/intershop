@@ -1,9 +1,9 @@
-package ru.yandex.practicum.intershop.mapper;
+package ru.yandex.practicum.store.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import ru.yandex.practicum.intershop.dto.ItemView;
-import ru.yandex.practicum.intershop.model.Item;
+import ru.yandex.practicum.store.dto.ItemView;
+import ru.yandex.practicum.store.model.Item;
 
 @Mapper(componentModel = "spring")
 public interface ItemMapper {

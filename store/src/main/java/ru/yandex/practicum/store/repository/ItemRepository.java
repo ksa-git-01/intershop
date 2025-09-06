@@ -1,9 +1,9 @@
-package ru.yandex.practicum.intershop.repository;
+package ru.yandex.practicum.store.repository;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import reactor.core.publisher.Flux;
-import ru.yandex.practicum.intershop.model.Item;
+import ru.yandex.practicum.store.model.Item;
 
 public interface ItemRepository extends R2dbcRepository<Item, Long> {
     Flux<Item> findAllByTitleContainsIgnoreCaseOrDescriptionContainsIgnoreCase(
