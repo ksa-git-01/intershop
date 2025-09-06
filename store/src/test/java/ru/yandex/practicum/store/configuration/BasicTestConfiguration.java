@@ -1,9 +1,11 @@
-package ru.yandex.practicum.intershop.configuration;
+package ru.yandex.practicum.store.configuration;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationContext;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -15,6 +17,7 @@ import reactor.core.publisher.Mono;
 public abstract class BasicTestConfiguration {
     static {
         PostgresTestContainer.getInstance();
+        EmbeddedRedisTestContainer.start();
     }
 
     @DynamicPropertySource
@@ -24,6 +27,10 @@ public abstract class BasicTestConfiguration {
         r.add("spring.r2dbc.username", c::getUsername);
         r.add("spring.r2dbc.password", c::getPassword);
         r.add("spring.sql.init.mode", () -> "never");
+
+        r.add("spring.data.redis.host", () -> "localhost");
+        r.add("spring.data.redis.port", () -> String.valueOf(EmbeddedRedisTestContainer.getPort()));
+        r.add("spring.cache.type", () -> "redis");
     }
 
     @Autowired
@@ -32,9 +39,13 @@ public abstract class BasicTestConfiguration {
     @Autowired
     protected WebTestClient webTestClient;
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     @BeforeEach
     void setUp() {
         initializeDatabase().block();
+        clearRedisCache();
     }
 
     private Mono<Void> initializeDatabase() {
@@ -45,6 +56,16 @@ public abstract class BasicTestConfiguration {
                 .then(databaseClient.sql("DROP TABLE IF EXISTS item CASCADE").then())
                 .then(createTables())
                 .then();
+    }
+
+    private void clearRedisCache() {
+        var cacheManager = applicationContext.getBean(CacheManager.class);
+        cacheManager.getCacheNames().forEach(cacheName -> {
+            var cache = cacheManager.getCache(cacheName);
+            if (cache != null) {
+                cache.clear();
+            }
+        });
     }
 
     private Mono<Void> createTables() {
