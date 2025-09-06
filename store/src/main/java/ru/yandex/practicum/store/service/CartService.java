@@ -1,17 +1,17 @@
-package ru.yandex.practicum.intershop.service;
+package ru.yandex.practicum.store.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.intershop.dto.CartItemAction;
-import ru.yandex.practicum.intershop.dto.CartView;
-import ru.yandex.practicum.intershop.dto.ItemView;
-import ru.yandex.practicum.intershop.mapper.ItemMapper;
-import ru.yandex.practicum.intershop.model.Cart;
-import ru.yandex.practicum.intershop.model.Item;
-import ru.yandex.practicum.intershop.repository.CartRepository;
-import ru.yandex.practicum.intershop.repository.ItemRepository;
+import ru.yandex.practicum.store.dto.CartItemAction;
+import ru.yandex.practicum.store.dto.CartView;
+import ru.yandex.practicum.store.dto.ItemView;
+import ru.yandex.practicum.store.mapper.ItemMapper;
+import ru.yandex.practicum.store.model.Cart;
+import ru.yandex.practicum.store.model.Item;
+import ru.yandex.practicum.store.repository.CartRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,7 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CartService {
     private final CartRepository cartRepository;
-    private final ItemRepository itemRepository;
+    private final ItemService itemService;
     private final ItemMapper itemMapper;
 
     public Mono<Void> modifyCartByItem(Long id, CartItemAction action) {
@@ -63,7 +63,7 @@ public class CartService {
     }
 
     private Mono<Cart> createNewCartItem(Long itemId) {
-        return itemRepository.findById(itemId)
+        return itemService.findItemById(itemId)  // вместо itemRepository.findById
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Item not found")))
                 .flatMap(item -> {
                     Cart cart = new Cart();
@@ -101,7 +101,9 @@ public class CartService {
                 .map(Cart::getItemId)
                 .toList();
 
-        return itemRepository.findAllById(itemIds).collectList();
+        return Flux.fromIterable(itemIds)
+                .flatMap(itemService::findItemById)
+                .collectList();
     }
 
     private CartView createCartViewWithItems(List<Cart> cartList, List<Item> items) {

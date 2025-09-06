@@ -1,4 +1,4 @@
-package ru.yandex.practicum.intershop.service;
+package ru.yandex.practicum.store.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -6,16 +6,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.intershop.dto.ItemView;
-import ru.yandex.practicum.intershop.dto.OrderView;
-import ru.yandex.practicum.intershop.model.Cart;
-import ru.yandex.practicum.intershop.model.Item;
-import ru.yandex.practicum.intershop.model.Order;
-import ru.yandex.practicum.intershop.model.OrderItem;
-import ru.yandex.practicum.intershop.repository.CartRepository;
-import ru.yandex.practicum.intershop.repository.ItemRepository;
-import ru.yandex.practicum.intershop.repository.OrderItemRepository;
-import ru.yandex.practicum.intershop.repository.OrderRepository;
+import ru.yandex.practicum.store.dto.ItemView;
+import ru.yandex.practicum.store.dto.OrderView;
+import ru.yandex.practicum.store.model.Cart;
+import ru.yandex.practicum.store.model.Item;
+import ru.yandex.practicum.store.model.Order;
+import ru.yandex.practicum.store.model.OrderItem;
+import ru.yandex.practicum.store.repository.CartRepository;
+import ru.yandex.practicum.store.repository.OrderItemRepository;
+import ru.yandex.practicum.store.repository.OrderRepository;
 
 import java.util.List;
 
@@ -24,7 +23,7 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final ItemRepository itemRepository;
+    private final ItemService itemService;
     private final CartRepository cartRepository;
     private final OrderItemRepository orderItemRepository;
 
@@ -44,7 +43,7 @@ public class OrderService {
     }
 
     private Mono<ItemView> orderItemToItemView(OrderItem orderItem) {
-        return itemRepository.findById(orderItem.getItemId())
+        return itemService.findItemById(orderItem.getItemId())
                 .map(item -> createItemView(orderItem, item));
     }
 
@@ -90,7 +89,7 @@ public class OrderService {
     }
 
     private Mono<Void> validateCartItemStock(Cart cartItem) {
-        return itemRepository.findById(cartItem.getItemId())
+        return itemService.findItemById(cartItem.getItemId())
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Item not found: " + cartItem.getItemId())))
                 .flatMap(item -> {
                     if (item.getCount() < cartItem.getCount()) {
@@ -112,15 +111,9 @@ public class OrderService {
     }
 
     private Mono<Void> processCartItem(Cart cartItem, Order order) {
-        return itemRepository.findById(cartItem.getItemId())
-                .flatMap(item -> updateItemStock(item, cartItem.getCount()))
+        return itemService.updateItemStock(cartItem.getItemId(), cartItem.getCount())  // вызов ItemService
                 .flatMap(item -> createOrderItem(order, item, cartItem))
                 .then();
-    }
-
-    private Mono<Item> updateItemStock(Item item, Integer purchasedCount) {
-        item.setCount(item.getCount() - purchasedCount);
-        return itemRepository.save(item);
     }
 
     private Mono<OrderItem> createOrderItem(Order order, Item item, Cart cartItem) {
