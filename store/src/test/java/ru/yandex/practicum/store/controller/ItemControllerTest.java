@@ -1,4 +1,4 @@
-package ru.yandex.practicum.intershop.controller;
+package ru.yandex.practicum.store.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,8 +9,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
-import ru.yandex.practicum.intershop.service.FileService;
+import ru.yandex.practicum.store.configuration.BasicTestConfiguration;
+import ru.yandex.practicum.store.service.FileService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

@@ -1,11 +1,11 @@
-package ru.yandex.practicum.intershop.controller;
+package ru.yandex.practicum.store.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import ru.yandex.practicum.intershop.configuration.BasicTestConfiguration;
+import ru.yandex.practicum.store.configuration.BasicTestConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

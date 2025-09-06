@@ -1,4 +1,4 @@
-package ru.yandex.practicum.intershop.configuration;
+package ru.yandex.practicum.store.configuration;
 
 import org.testcontainers.containers.PostgreSQLContainer;
 
