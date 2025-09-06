@@ -1,6 +1,9 @@
-package ru.yandex.practicum.intershop.service;
+package ru.yandex.practicum.store.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -8,15 +11,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
-import ru.yandex.practicum.intershop.dto.ItemSort;
-import ru.yandex.practicum.intershop.model.Item;
-import ru.yandex.practicum.intershop.repository.ItemRepository;
+import ru.yandex.practicum.store.dto.ItemSort;
+import ru.yandex.practicum.store.model.Item;
+import ru.yandex.practicum.store.repository.ItemRepository;
 
 @Service
 @RequiredArgsConstructor
 public class ItemService {
     private final ItemRepository itemRepository;
 
+    @Cacheable(value = "items", key = "#id")
     public Mono<Item> findItemById(Long id) {
         return itemRepository.findById(id);
     }
@@ -74,5 +78,15 @@ public class ItemService {
 
         return itemRepository.save(item)
                 .map(Item::getId);
+    }
+
+    @CacheEvict(value = "items", key = "#itemId")
+    public Mono<Item> updateItemStock(Long itemId, Integer purchasedCount) {
+        return itemRepository.findById(itemId)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Item not found: " + itemId)))
+                .flatMap(item -> {
+                    item.setCount(item.getCount() - purchasedCount);
+                    return itemRepository.save(item);
+                });
     }
 }
