@@ -23,6 +23,9 @@ public class CartController {
                     model.addAttribute("items", cart.getItems());
                     model.addAttribute("total", cart.getTotal());
                     model.addAttribute("empty", cart.getEmpty());
+                    model.addAttribute("balance", cart.getBalance());
+                    model.addAttribute("hasError", cart.getHasError());
+                    model.addAttribute("errorMessage", cart.getErrorMessage());
                 })
                 .thenReturn("cart");
     }
