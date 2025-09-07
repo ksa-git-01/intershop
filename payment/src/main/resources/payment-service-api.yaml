@@ -4,11 +4,13 @@ info:
   description: RESTful сервис для управления платежами
   version: 1.0.0
 servers:
-  - url: http://localhost:18082
-    description: Development server
+  - url: http://intershop-payment:8080
+    description: Docker container url
 paths:
   /balance:
     get:
+      tags:
+        - Payment
       summary: Получить баланс
       description: Возвращает случайный положительный баланс
       operationId: getBalance
@@ -35,6 +37,8 @@ paths:
                 $ref: '#/components/schemas/Error'
   /payment:
     post:
+      tags:
+        - Payment
       summary: Осуществить платеж
       description: Выполняет списание указанной суммы с баланса
       operationId: postPayment
