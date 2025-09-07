@@ -174,4 +174,35 @@ public class CartService {
                 .setScale(2, RoundingMode.HALF_UP)
                 .doubleValue();
     }
+
+    public Mono<Double> getCartTotal() {
+        return cartRepository.findAll()
+                .collectList()
+                .flatMap(this::calculateCartTotal);
+    }
+
+    private Mono<Double> calculateCartTotal(List<Cart> cartList) {
+        if (cartList.isEmpty()) {
+            return Mono.just(0.0);
+        }
+
+        return loadItemsForCart(cartList)
+                .map(items -> {
+                    return cartList.stream()
+                            .mapToDouble(cart -> {
+                                Item item = findItemById(cart.getItemId(), items);
+                                return cart.getCount() * item.getPrice();
+                            })
+                            .sum();
+                })
+                .map(this::roundToTwoDecimals);
+    }
+
+    public Mono<Void> clearCart() {
+        return cartRepository.deleteAll();
+    }
+
+    public Flux<Cart> findAll() {
+        return cartRepository.findAll();
+    }
 }

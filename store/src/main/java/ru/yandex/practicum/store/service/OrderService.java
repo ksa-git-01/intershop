@@ -6,6 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.yandex.practicum.store.client.PaymentClient;
+import ru.yandex.practicum.store.client.model.PostPayment200Response;
+import ru.yandex.practicum.store.client.model.PostPaymentRequest;
 import ru.yandex.practicum.store.dto.ItemView;
 import ru.yandex.practicum.store.dto.OrderView;
 import ru.yandex.practicum.store.model.Cart;
@@ -24,8 +27,9 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ItemService itemService;
-    private final CartRepository cartRepository;
+    private final CartService cartService;
     private final OrderItemRepository orderItemRepository;
+    private final PaymentClient paymentClient;
 
     public Flux<OrderView> getOrders() {
         return orderRepository.findAll()
@@ -64,9 +68,25 @@ public class OrderService {
                 .flatMap(this::buildOrderView);
     }
 
-    @Transactional
     public Mono<Long> buy() {
-        return cartRepository.findAll()
+        return cartService.getCartTotal()
+                .flatMap(total -> {
+                    if (total == 0.0) {
+                        return Mono.error(new IllegalStateException("Cart is empty"));
+                    }
+
+                    return makePayment(total)
+                            .then(cartProcessing());
+                });
+    }
+
+    private Mono<PostPayment200Response> makePayment(Double total) {
+        PostPaymentRequest request = new PostPaymentRequest().amount(total);
+        return paymentClient.postPayment(request);
+    }
+
+    private Mono<Long> cartProcessing() {
+        return cartService.findAll()
                 .collectList()
                 .flatMap(this::processOrder);
     }
@@ -79,7 +99,7 @@ public class OrderService {
         return validateStock(cartItems)
                 .then(createOrder())
                 .flatMap(order -> processCartItems(cartItems, order))
-                .flatMap(order -> clearCart().thenReturn(order.getId()));
+                .flatMap(order -> cartService.clearCart().thenReturn(order.getId()));
     }
 
     private Mono<Void> validateStock(List<Cart> cartItems) {
@@ -123,9 +143,5 @@ public class OrderService {
         orderItem.setCount(cartItem.getCount());
         orderItem.setPrice(item.getPrice());
         return orderItemRepository.save(orderItem);
-    }
-
-    private Mono<Void> clearCart() {
-        return cartRepository.deleteAll();
     }
 }

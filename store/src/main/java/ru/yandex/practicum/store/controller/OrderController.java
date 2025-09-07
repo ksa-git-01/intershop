@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import reactor.core.publisher.Mono;
+import ru.yandex.practicum.store.client.exception.InsufficientFundsException;
+import ru.yandex.practicum.store.client.exception.PaymentServiceUnavailableException;
 import ru.yandex.practicum.store.service.OrderService;
 
 @Controller
@@ -38,6 +40,8 @@ public class OrderController {
     @PostMapping("/buy")
     public Mono<String> buy() {
         return orderService.buy()
-                .map(orderId -> "redirect:/orders/" + orderId + "?newOrder=true");
+                .map(orderId -> "redirect:/orders/" + orderId + "?newOrder=true")
+                .onErrorReturn(PaymentServiceUnavailableException.class, "redirect:/cart/items")
+                .onErrorReturn(InsufficientFundsException.class, "redirect:/cart/items");
     }
 }
