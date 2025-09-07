@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import ru.yandex.practicum.payment.api.DefaultApi;
+import ru.yandex.practicum.payment.api.PaymentApi;
 import ru.yandex.practicum.payment.mapper.BalanceMapper;
 import ru.yandex.practicum.payment.mapper.PaymentMapper;
 import ru.yandex.practicum.payment.model.GetBalance200Response;
@@ -15,7 +15,7 @@ import ru.yandex.practicum.payment.service.PaymentService;
 
 @Controller
 @RequiredArgsConstructor
-public class PaymentController implements DefaultApi {
+public class PaymentController implements PaymentApi {
 
     private final PaymentService paymentService;
     private final BalanceMapper balanceMapper;
