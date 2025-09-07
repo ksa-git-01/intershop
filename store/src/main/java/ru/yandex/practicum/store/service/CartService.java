@@ -5,6 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.yandex.practicum.store.client.PaymentClient;
+import ru.yandex.practicum.store.client.exception.PaymentServiceUnavailableException;
+import ru.yandex.practicum.store.client.model.GetBalance200Response;
 import ru.yandex.practicum.store.dto.CartItemAction;
 import ru.yandex.practicum.store.dto.CartView;
 import ru.yandex.practicum.store.dto.ItemView;
@@ -25,6 +28,8 @@ public class CartService {
     private final CartRepository cartRepository;
     private final ItemService itemService;
     private final ItemMapper itemMapper;
+
+    private final PaymentClient paymentClient;
 
     public Mono<Void> modifyCartByItem(Long id, CartItemAction action) {
         return switch (action) {
@@ -74,9 +79,31 @@ public class CartService {
     }
 
     public Mono<CartView> getCart() {
-        return cartRepository.findAll()
+        Mono<CartView> cartMono = cartRepository.findAll()
                 .collectList()
                 .flatMap(this::buildCartView);
+
+        Mono<Double> balanceMono = paymentClient.getBalance()
+                .map(GetBalance200Response::getBalance);
+
+        return Mono.zip(cartMono, balanceMono)
+                .map(tuple -> {
+                    CartView baseCart = tuple.getT1();
+                    Double balance = tuple.getT2();
+
+                    return baseCart.toBuilder()
+                            .balance(balance)
+                            .hasError(false)
+                            .errorMessage(null)
+                            .build();
+                })
+                .onErrorResume(PaymentServiceUnavailableException.class, ex ->
+                        cartMono.map(baseCart -> baseCart.toBuilder()
+                                .balance(null)
+                                .hasError(true)
+                                .errorMessage(ex.getMessage())
+                                .build())
+                );
     }
 
     private Mono<CartView> buildCartView(List<Cart> cartList) {
