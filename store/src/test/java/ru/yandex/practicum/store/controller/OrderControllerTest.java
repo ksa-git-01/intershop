@@ -2,11 +2,23 @@ package ru.yandex.practicum.store.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import reactor.core.publisher.Mono;
+import ru.yandex.practicum.store.client.PaymentClient;
+import ru.yandex.practicum.store.client.exception.InsufficientFundsException;
+import ru.yandex.practicum.store.client.exception.PaymentServiceUnavailableException;
+import ru.yandex.practicum.store.client.model.PostPayment200Response;
+import ru.yandex.practicum.store.client.model.PostPaymentRequest;
 import ru.yandex.practicum.store.configuration.BasicTestConfiguration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 public class OrderControllerTest extends BasicTestConfiguration {
+    @MockitoBean
+    private PaymentClient paymentClient;
+
     private long firstItemId;
     private long secondItemId;
 
@@ -48,6 +60,11 @@ public class OrderControllerTest extends BasicTestConfiguration {
 
     @Test
     void buy() {
+        when(paymentClient.postPayment(any(PostPaymentRequest.class)))
+                .thenReturn(Mono.just(new PostPayment200Response()
+                        .success(true)
+                        .remainingBalance(500.0)));
+
         insertCart(firstItemId, 2);
         insertCart(secondItemId, 3);
 
@@ -71,5 +88,41 @@ public class OrderControllerTest extends BasicTestConfiguration {
         assertThat(cartAfter).isZero();
         assertThat(stockFirstAfter).isEqualTo(stockFirstBefore - 2);
         assertThat(stockSecondAfter).isEqualTo(stockSecondBefore - 3);
+    }
+
+    @Test
+    void buyWhenPaymentServiceUnavailable() {
+        insertCart(firstItemId, 1);
+
+        when(paymentClient.postPayment(any(PostPaymentRequest.class)))
+                .thenReturn(Mono.error(new PaymentServiceUnavailableException("Сервис оплаты недоступен")));
+
+        webTestClient.post()
+                .uri("/buy")
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/cart/items");
+
+        // Проверяем что заказ не создался
+        Integer ordersCount = getTotalCount("orders").block();
+        assertThat(ordersCount).isZero();
+    }
+
+    @Test
+    void buyWhenInsufficientFunds() {
+        insertCart(firstItemId, 1);
+
+        when(paymentClient.postPayment(any(PostPaymentRequest.class)))
+                .thenReturn(Mono.error(new InsufficientFundsException("Недостаточно средств")));
+
+        webTestClient.post()
+                .uri("/buy")
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().location("/cart/items");
+
+        // Проверяем что заказ не создался
+        Integer ordersCount = getTotalCount("orders").block();
+        assertThat(ordersCount).isZero();
     }
 }

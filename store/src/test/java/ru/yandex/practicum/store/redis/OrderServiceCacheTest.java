@@ -3,12 +3,19 @@ package ru.yandex.practicum.store.redis;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import reactor.core.publisher.Mono;
+import ru.yandex.practicum.store.client.PaymentClient;
+import ru.yandex.practicum.store.client.model.PostPayment200Response;
+import ru.yandex.practicum.store.client.model.PostPaymentRequest;
 import ru.yandex.practicum.store.configuration.BasicTestConfiguration;
 import ru.yandex.practicum.store.model.Item;
 import ru.yandex.practicum.store.service.ItemService;
 import ru.yandex.practicum.store.service.OrderService;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 public class OrderServiceCacheTest extends BasicTestConfiguration {
 
@@ -21,8 +28,16 @@ public class OrderServiceCacheTest extends BasicTestConfiguration {
     @Autowired
     private CacheManager cacheManager;
 
+    @MockitoBean
+    private PaymentClient paymentClient;
+
     @Test
     void buyWithInvalidatingCache() {
+        when(paymentClient.postPayment(any(PostPaymentRequest.class)))
+                .thenReturn(Mono.just(new PostPayment200Response()
+                        .success(true)
+                        .remainingBalance(500.0)));
+
         // Создаем товары
         long itemId1 = insertItem("Товар 1", "Описание товара 1", "itemimage1.jpg", 10, 100.0);
         long itemId2 = insertItem("Товар 2", "Описание товара 2", "itemimage2.jpg", 5, 50.0);
@@ -64,6 +79,11 @@ public class OrderServiceCacheTest extends BasicTestConfiguration {
 
     @Test
     void buyShouldNotAffectCacheForNonPurchasedItems() {
+        when(paymentClient.postPayment(any(PostPaymentRequest.class)))
+                .thenReturn(Mono.just(new PostPayment200Response()
+                        .success(true)
+                        .remainingBalance(500.0)));
+
         // Создаем товары
         long purchasedItemId = insertItem("Купленный товар", "Описание", "purchased.jpg", 10, 100.0);
         long nonPurchasedItemId = insertItem("Некупленный товар", "Описание", "non_purchased.jpg", 5, 50.0);
