@@ -149,9 +149,10 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>../payment/src/main/resources/payment-service-api.yaml</inputSpec>
+							<inputSpec>${project.parent.basedir}/payment/src/main/resources/payment-service-api.yaml</inputSpec>
 							<generatorName>java</generatorName>
 							<library>webclient</library>
+							<apiNameSuffix>Api</apiNameSuffix>
 							<apiPackage>ru.yandex.practicum.store.client.api</apiPackage>
 							<modelPackage>ru.yandex.practicum.store.client.model</modelPackage>
 							<configOptions>
