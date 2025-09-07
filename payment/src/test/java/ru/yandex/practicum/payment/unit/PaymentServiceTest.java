@@ -44,11 +44,10 @@ class PaymentServiceTest {
 
     @Test
     void processPaymentWithValidData() {
-        Long orderId = 12345L;
         Double amount = 1000.0;
         Double expectedRemainingBalance = INITIAL_BALANCE - amount;
 
-        Mono<PaymentResultDto> result = paymentService.processPayment(orderId, amount);
+        Mono<PaymentResultDto> result = paymentService.processPayment(amount);
 
         StepVerifier.create(result)
                 .assertNext(paymentResult -> {
@@ -60,25 +59,10 @@ class PaymentServiceTest {
     }
 
     @Test
-    void processPaymentWithNullOrderId() {
-        Long orderId = null;
-        Double amount = 1000.0;
-
-        Mono<PaymentResultDto> result = paymentService.processPayment(orderId, amount);
-
-        StepVerifier.create(result)
-                .expectErrorMatches(throwable ->
-                        throwable instanceof IllegalArgumentException &&
-                                throwable.getMessage().equals("Некорректный ID заказа"))
-                .verify();
-    }
-
-    @Test
     void processPaymentWithNullAmount() {
-        Long orderId = 12345L;
         Double amount = null;
 
-        Mono<PaymentResultDto> result = paymentService.processPayment(orderId, amount);
+        Mono<PaymentResultDto> result = paymentService.processPayment(amount);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable ->
@@ -89,10 +73,9 @@ class PaymentServiceTest {
 
     @Test
     void processPaymentWithInsufficientFunds() {
-        Long orderId = 12345L;
         Double amount = INITIAL_BALANCE + 1000.0;
 
-        Mono<PaymentResultDto> result = paymentService.processPayment(orderId, amount);
+        Mono<PaymentResultDto> result = paymentService.processPayment(amount);
 
         StepVerifier.create(result)
                 .expectErrorMatches(throwable ->
@@ -105,10 +88,9 @@ class PaymentServiceTest {
 
     @Test
     void processPaymentWithExactBalance() {
-        Long orderId = 12345L;
         Double amount = INITIAL_BALANCE;
 
-        Mono<PaymentResultDto> result = paymentService.processPayment(orderId, amount);
+        Mono<PaymentResultDto> result = paymentService.processPayment(amount);
 
         StepVerifier.create(result)
                 .assertNext(paymentResult -> {

@@ -33,7 +33,7 @@ public class PaymentController implements PaymentApi {
             Mono<PostPaymentRequest> postPaymentRequest,
             ServerWebExchange exchange) {
         return postPaymentRequest
-                .flatMap(request -> paymentService.processPayment(request.getOrderId(), request.getAmount()))
+                .flatMap(request -> paymentService.processPayment(request.getAmount()))
                 .map(paymentMapper::toResponse)
                 .map(ResponseEntity::ok);
     }

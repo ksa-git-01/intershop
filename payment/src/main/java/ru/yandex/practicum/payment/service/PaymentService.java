@@ -17,12 +17,8 @@ public class PaymentService {
         return Mono.just(new BalanceDto(currentBalance));
     }
 
-    public Mono<PaymentResultDto> processPayment(Long orderId, Double amount) {
+    public Mono<PaymentResultDto> processPayment(Double amount) {
         return Mono.fromCallable(() -> {
-            if (orderId == null || orderId <= 0) {
-                throw new IllegalArgumentException("Некорректный ID заказа");
-            }
-
             if (amount == null || amount <= 0) {
                 throw new IllegalArgumentException("Сумма платежа должна быть положительной");
             }

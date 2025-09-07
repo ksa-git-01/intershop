@@ -32,7 +32,6 @@ class PaymentControllerTest {
     void postPaymentWithValidData() {
         String requestBody = """
                 {
-                    "orderId": 12345,
                     "amount": 1000.0
                 }
                 """;
@@ -53,7 +52,6 @@ class PaymentControllerTest {
     void postPaymentWithInsufficientFunds() {
         String requestBody = """
                 {
-                    "orderId": 12345,
                     "amount": 15000.0
                 }
                 """;
@@ -71,31 +69,9 @@ class PaymentControllerTest {
     }
 
     @Test
-    void postPaymentWithNullOrderId() {
-        String requestBody = """
-                {
-                    "orderId": null,
-                    "amount": 1000.0
-                }
-                """;
-
-        webTestClient.post()
-                .uri("/payment")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestBody)
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                .expectBody()
-                .jsonPath("$.error").isEqualTo("Invalid request")
-                .jsonPath("$.message").isEqualTo("Некорректный формат данных");
-    }
-
-    @Test
     void postPaymentWithNullAmount() {
         String requestBody = """
                 {
-                    "orderId": 12345,
                     "amount": null
                 }
                 """;
@@ -112,32 +88,11 @@ class PaymentControllerTest {
                 .jsonPath("$.message").isEqualTo("Некорректный формат данных");
     }
 
-    @Test
-    void postPaymentWithZeroOrderId() {
-        String requestBody = """
-                {
-                    "orderId": 0,
-                    "amount": 1000.0
-                }
-                """;
-
-        webTestClient.post()
-                .uri("/payment")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(requestBody)
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
-                .expectBody()
-                .jsonPath("$.error").isEqualTo("Invalid request")
-                .jsonPath("$.message").isEqualTo("Некорректный ID заказа");
-    }
 
     @Test
     void postPaymentWithZeroAmount() {
         String requestBody = """
                 {
-                    "orderId": 12345,
                     "amount": 0
                 }
                 """;
