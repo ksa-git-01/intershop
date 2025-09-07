@@ -49,17 +49,12 @@ paths:
             schema:
               type: object
               properties:
-                orderId:
-                  type: integer
-                  format: int64
-                  example: 12345
                 amount:
                   type: number
                   format: double
                   minimum: 0
                   example: 250.75
               required:
-                - orderId
                 - amount
       responses:
         '200':
