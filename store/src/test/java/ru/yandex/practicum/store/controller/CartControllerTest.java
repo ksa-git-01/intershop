@@ -3,13 +3,23 @@ package ru.yandex.practicum.store.controller;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import ru.yandex.practicum.store.client.PaymentClient;
+import ru.yandex.practicum.store.client.exception.PaymentServiceUnavailableException;
 import ru.yandex.practicum.store.configuration.BasicTestConfiguration;
+import reactor.core.publisher.Mono;
+import ru.yandex.practicum.store.client.model.GetBalance200Response;
+
+import static org.mockito.Mockito.when;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CartControllerTest extends BasicTestConfiguration {
+
+    @MockitoBean
+    private PaymentClient paymentClient;
 
     @BeforeEach
     void setUpData() {
@@ -21,6 +31,9 @@ public class CartControllerTest extends BasicTestConfiguration {
 
     @Test
     void getCartModel() {
+        when(paymentClient.getBalance())
+                .thenReturn(Mono.just(new GetBalance200Response().balance(1500.0)));
+
         webTestClient.get()
                 .uri("/cart/items")
                 .exchange()
@@ -29,6 +42,7 @@ public class CartControllerTest extends BasicTestConfiguration {
                 .value(body -> {
                     assertThat(body).contains("Корзина товаров");
                     assertThat(body).contains("Товар 1");
+                    assertThat(body).contains("Баланс: 1500.0 руб.");
                 });
     }
 
@@ -90,5 +104,39 @@ public class CartControllerTest extends BasicTestConfiguration {
 
         Integer after = getCartItemsCount(2L).block();
         assertThat(after).isEqualTo(0);
+    }
+
+    @Test
+    void getCartModelWhenPaymentServiceUnavailable() {
+        when(paymentClient.getBalance())
+                .thenReturn(Mono.error(new PaymentServiceUnavailableException("Сервис оплаты недоступен")));
+
+        webTestClient.get()
+                .uri("/cart/items")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .value(body -> {
+                    assertThat(body).contains("Корзина товаров");
+                    assertThat(body).contains("Товар 1");
+                    assertThat(body).contains("Сервис оплаты недоступен");
+                });
+    }
+
+    @Test
+    void getCartModelWhenInsufficientFunds() {
+        when(paymentClient.getBalance())
+                .thenReturn(Mono.just(new GetBalance200Response().balance(50.0)));
+
+        webTestClient.get()
+                .uri("/cart/items")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .value(body -> {
+                    assertThat(body).contains("Корзина товаров");
+                    assertThat(body).contains("Товар 1");
+                    assertThat(body).contains("Недостаточно средств");
+                });
     }
 }
