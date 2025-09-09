@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: Payment Service API
+  description: RESTful сервис для управления платежами
+  version: 1.0.0
+servers:
+  - url: http://intershop-payment:8080
+    description: Docker container url
+paths:
+  /balance:
+    get:
+      tags:
+        - Payment
+      summary: Получить баланс
+      description: Возвращает случайный положительный баланс
+      operationId: getBalance
+      responses:
+        '200':
+          description: Успешное получение баланса
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: number
+                    format: double
+                    minimum: 0
+                    example: 1500.50
+                required:
+                  - balance
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /payment:
+    post:
+      tags:
+        - Payment
+      summary: Осуществить платеж
+      description: Выполняет списание указанной суммы с баланса
+      operationId: postPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  format: double
+                  minimum: 0
+                  example: 250.75
+              required:
+                - amount
+      responses:
+        '200':
+          description: Платеж успешно выполнен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  remainingBalance:
+                    type: number
+                    format: double
+                    example: 1249.75
+                required:
+                  - success
+                  - remainingBalance
+        '400':
+          description: Недостаточно средств
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Insufficient funds"
+                message: "Недостаточно средств для выполнения платежа"
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Internal Server Error"
+        message:
+          type: string
+          example: "Произошла внутренняя ошибка сервера"
+      required:
+        - error
+        - message

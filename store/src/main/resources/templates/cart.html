@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Корзина товаров</title>
+</head>
+
+<body>
+<a href="/orders" style="float:right;">
+    <b>ЗАКАЗЫ &cudarrr;</b>
+</a>
+<a href="/main/items" style="float:right;">
+    <b>ГЛАВНАЯ &cudarrr;</b>
+</a>
+<table style="width:70%;margin-left:auto;margin-right:auto;">
+    <tr th:each="item : ${items}">
+        <td>
+            <table>
+                <tr>
+                    <td>
+                        <img width="300" height="300" th:src="@{/images/{filename}(filename=${item.imgPath})}">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <b th:text="${item.getTitle()}"></b>
+                    </td>
+                    <td>
+                        <b th:text="${item.getPrice()}+' руб.'"></b>
+                    </td>
+                </tr>
+                <tr><td th:text="${item.getDescription()}"></td></tr>
+                <tr>
+                    <td>
+                        <form th:action="${'/cart/items/'+item.getId()}" method="post">
+                            <button name="action" value="MINUS">-</button>
+                            <span th:text="${item.getCount()}"></span>
+                            <button name="action" value="PLUS">+</button>
+                            <button name="action" value="DELETE" style="float:right;">&cross;</button>
+                        </form>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align:right">
+            <b th:text="'Итого: '+${total}+' руб.'"></b>
+        </td>
+    </tr>
+    <!-- Блок с информацией о балансе -->
+    <tr th:if="${balance != null and (hasError == null or hasError == false)}">
+        <td style="text-align:right">
+            <span th:text="'Баланс: '+${balance}+' руб.'"></span>
+        </td>
+    </tr>
+    <!-- Блок с сообщением об ошибке -->
+    <tr th:if="${hasError != null and hasError == true}">
+        <td style="text-align:right; color:red;">
+            <span th:text="${errorMessage}"></span>
+        </td>
+    </tr>
+    <tr>
+        <td style="text-align:right">
+            <!-- Кнопка "Купить" доступна только если корзина не пустая И нет ошибки И баланс достаточен -->
+            <form action="/buy" method="post" th:if="${!empty and (hasError == null or hasError == false) and balance != null and balance >= total}">
+                <button>Купить</button>
+            </form>
+            <!-- Сообщение о недостаточности средств -->
+            <span th:if="${!empty and (hasError == null or hasError == false) and balance != null and balance < total}" style="color:orange;">
+                Недостаточно средств для покупки
+            </span>
+        </td>
+    </tr>
+</table>
+</body>
+
+</html>

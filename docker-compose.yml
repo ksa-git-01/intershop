@@ -15,31 +15,54 @@ services:
     networks:
       - intershop-network
 
-  app:
+  redis:
+    image: redis:7.4-alpine
+    container_name: intershop-redis
+    ports:
+      - "${REDIS_PORT:-16379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - intershop-network
+    command: redis-server --appendonly yes
+
+  store:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: intershop-app
+      dockerfile: store/Dockerfile
+    container_name: intershop-store
     ports:
-      - "${APP_PORT:-18080}:8080"
+      - "${STORE_PORT:-18081}:8080"
     depends_on:
       - postgres
+      - redis
     environment:
-      # В реальном приложении все креды будут вынесены в env или хранилище секретов,
-      # здесь проставлены дефолтные значения только для упрощения локальной сборки и ревью
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=${POSTGRES_DB:-intershop}
       - DB_USER=${POSTGRES_USER:-intershop_user}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
       - uploads_data:/app/uploads
+    networks:
+      - intershop-network
+
+  payment:
+    build:
+      context: .
+      dockerfile: payment/Dockerfile
+    container_name: intershop-payment
+    ports:
+      - "${PAYMENT_PORT:-18082}:8080"
     networks:
       - intershop-network
 
 volumes:
   postgres_data:
   uploads_data:
+  redis_data:
 
 networks:
   intershop-network:
